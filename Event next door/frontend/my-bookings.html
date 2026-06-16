@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - Event Next Door</title>
+    <link rel="stylesheet" href="css/content.css">
+    <style>
+        .bookings-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        .booking-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .booking-card h3 {
+            color: #ff9800;
+            margin-bottom: 10px;
+        }
+        .booking-card p {
+            color: rgb(246, 242, 242);
+            margin: 8px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav style="background-color: rgba(17, 6, 6, 0.96); padding: 15px; display: flex; justify-content: space-between;">
+            <a href="event_list.html" style="color: rgb(246, 242, 242); text-decoration: none; font-weight: bold;">← Back to Events</a>
+            <button onclick="handleLogout()" style="padding: 8px 15px; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+        </nav>
+    </header>
+
+    <div class="bookings-container">
+        <h1 style="text-align: center; color: rgb(246, 242, 242);">My Bookings</h1>
+        <div id="bookingsContainer"></div>
+    </div>
+
+      <footer>
+   
+        <div class="footer-content">
+        <h3>Event Next Door</h3>
+
+        <p>Email: info@eventnextdoor.com</p>
+
+        <p>Phone: +254 741 938 327</p>
+
+        <p>&copy; 2026 Event Next Door. All rights reserved.</p>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/my-bookings.js"></script>
+</body>
+</html>

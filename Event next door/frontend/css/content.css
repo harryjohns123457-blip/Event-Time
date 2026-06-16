@@ -1,0 +1,177 @@
+/* Image & Video styling */
+img, video {
+    width: 400px;
+    border-radius: 10px;
+    border: 5px solid red;
+    display: block;
+    margin: auto;
+    border-style: outset;
+}
+
+
+div {
+     
+   text-align: center;
+    
+    
+    color: aqua;
+}
+table {
+    padding: 30px;
+    gap: 40px;
+    word-spacing: 10px;
+    display: flex;
+    justify-content: center;
+   
+}
+body {
+    background-color: rgba(17, 6, 6, 0.96);
+    color: rgb(246, 242, 242);
+}
+button a {
+
+    text-decoration: none;
+    
+}
+p {
+    text-align: center;
+    font-size: 18px;
+    color: rgb(246, 242, 242);
+}
+
+.spacing {
+    margin-left: 10px;
+    gap: 20px;
+}
+
+td {
+    padding: 20px;
+    color: rgb(195, 100, 175);
+   
+    
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items:baseline;
+    gap: 3px;
+}
+
+.form-group input {
+    
+    width: 80%;
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+}
+
+
+
+
+th, p {
+    text-emphasis: inherit;
+
+    font-style: italic;
+ 
+    font: bold 20px ;
+}
+
+footer {
+    background-color: rgb(105, 21, 21);
+    color: rgb(246, 242, 242);
+    text-align: center;
+    padding: 1px;
+    margin: 20px;
+   
+}
+
+
+
+nav a {
+     color: rgb(246, 242, 242);
+    font-weight: bold;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+nav :hover {
+  background-color: #f51515;
+    color: white;
+    border-radius: 5px;
+
+}
+
+p {
+    color: antiquewhite;
+}
+
+.detail {
+    display: none;
+   
+}
+.detail:target {
+    display :block;
+}
+
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .form-group {
+            margin: 15px 0;
+             text-align: center;
+            margin: 0 auto;
+            display: block;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: rgb(246, 242, 242);
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            text-align: center;
+            margin: 0 auto;
+            display: block;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff9800;
+            
+        }
+        button {
+            
+            padding: 12px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            
+        }
+        button:hover {
+            background-color: #492f08;
+        }
+        .auth-link {
+            text-align: center;
+            margin-top: 15px;
+            color: rgb(246, 242, 242);
+        }
+        .auth-link a {
+            color: #ff9800;
+            text-decoration: none;
+        }
+    

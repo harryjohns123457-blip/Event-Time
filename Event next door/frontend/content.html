@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Event - Event Next Door</title>
+    <link rel="stylesheet" href="css/content.css">
+    <style>
+        .event-detail-card {
+            display: flex;
+            gap: 30px;
+            padding: 20px;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        .event-image {
+            max-width: 400px;
+            height: auto;
+            border-radius: 10px;
+            border: 5px solid red;
+        }
+        .event-info {
+            flex: 1;
+            color: rgb(246, 242, 242);
+        }
+        .event-info h1 {
+            color: #ff9800;
+            margin-bottom: 15px;
+        }
+        .event-info p {
+            margin: 10px 0;
+            text-align: left;
+        }
+        .event-description {
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: rgb(246, 242, 242);
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-book {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .btn-book:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 768px) {
+            .event-detail-card {
+                flex-direction: column;
+            }
+            .event-image {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav style="background-color: rgba(17, 6, 6, 0.96); padding: 15px; text-align: center;">
+            <a href="event_list.html" style="color: rgb(246, 242, 242); text-decoration: none; font-weight: bold;">← Back to Events</a>
+        </nav>
+    </header>
+
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+        <h1 style="text-align: center; color: rgb(246, 242, 242);">Book Your Event</h1>
+        <div id="eventDetails"></div>
+        <form id="bookingForm"></form>
+    </div>
+
+    <footer>
+        <p>Contact us at 0790179791 or +254741938327.</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/booking.js"></script>
+</body>
+</html>
