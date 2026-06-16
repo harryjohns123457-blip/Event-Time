@@ -9,53 +9,55 @@
 </head>
 <body>
     <header>
-        <nav class="block">
-            <a href="index.html">Home</a>
-            <div id="userNav" style="color: rgb(246, 242, 242);">
+        <nav class="navbar">
+            <a href="index.html" class="logo">Event Next Door</a>
+            <div id="userNav" class="user-nav">
                 <span id="userGreeting"></span>
             </div>
         </nav>
 
-        <nav class="link">
-            <a href="#trending">Trending</a>
-            <a href="#music">Music, Social & Cultural</a>
-            <a href="#adventures">Adventures</a>
-            <a href="my-bookings.html" class="booking-btn"  style="background-color: #ff9800; padding: 8px 16px; border-radius: 4px;">My Bookings</a>
+        <nav class="category-nav">
+            <a href="#" data-category="all">All Events</a>
+            <a href="#" data-category="trending">Trending</a>
+            <a href="#" data-category="music">Music, Social & Cultural</a>
+            <a href="#" data-category="adventures">Adventures</a>
+            <a href="my-bookings.html" class="booking-btn">My Bookings</a>
         </nav>
     </header>
 
     <main>
-
-
-        <!-- Optional Search Box -->
         <div class="search-container">
-
             <input
                 type="text"
                 id="searchInput"
+                class="search-box"
                 placeholder="Search events..."
+                aria-label="Search events"
             >
-
         </div>
 
-        <!-- Events are inserted here automatically -->
-        <div class="vartical">
-        <div id="eventsContainer"></div>
+        <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+            <p>Loading events...</p>
         </div>
-        
+
+        <div class="error-banner" id="errorBanner" style="display: none;">
+            <p id="errorMessage"></p>
+        </div>
+
+        <div class="events-container" id="eventsContainer">
+            <!-- Events will be inserted here -->
+        </div>
+
+        <div class="pagination" id="pagination"></div>
     </main>
 
     <footer>
-   
         <div class="footer-content">
-        <h3>Event Next Door</h3>
-
-        <p>Email: info@eventnextdoor.com</p>
-
-        <p>Phone: +254 741 938 327</p>
-
-        <p>&copy; 2026 Event Next Door. All rights reserved.</p>
-    </div>
+            <h3>Event Next Door</h3>
+            <p>Email: info@eventnextdoor.com</p>
+            <p>Phone: +254 741 938 327</p>
+            <p>&copy; 2026 Event Next Door. All rights reserved.</p>
+        </div>
     </footer>
 
     <script src="js/api.js"></script>

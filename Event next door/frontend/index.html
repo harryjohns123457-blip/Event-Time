@@ -2,45 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Tired of sitting indoors? worry no more cause event next door got you🎆">
     <title>Event Next Door - Home</title>
     <link rel="stylesheet" href="css/next-door.css">
 </head>
 <body>
-    <nav style="background-color: rgba(17, 6, 6, 0.96); padding: 15px; display: flex; justify-content: space-between; align-items: center;">
-        <div style="color: rgb(246, 242, 242); font-weight: bold; font-size: 18px;">Event Next Door</div>
-        <div id="userNav" style="color: rgb(246, 242, 242);">
-            <a href="event_list.html"class="nav-link" style="color: rgb(246, 242, 242); text-decoration: none; margin-right: 15px; font-weight: bold;">Browse Events</a>
-            <a href="login.html" class="nav-link" style="color: rgb(246, 242, 242); text-decoration: none; margin-right: 15px; font-weight: bold;">LogIn</a>
-            <a href="register.html" class="nav-link" style="color: rgb(246, 242, 242); text-decoration: none; font-weight: bold;">Register</a>
+    <nav class="navbar">
+        <div class="navbar-brand">Event Next Door</div>
+        <div id="userNav" class="navbar-links">
+            <a href="event_list.html" class="nav-link">Browse Events</a>
+            <a href="login.html" class="nav-link">LogIn</a>
+            <a href="register.html" class="nav-link">Register</a>
         </div>
     </nav>
 
-    <div class="bag">
-        <div class="left"></div>
-        <div class="right">
-            <h1 class="new2">EVENT <br> NEXT <br> DOOR</h1>
-            <p class="line2">Discover a world of excitement and connection with our diverse range of events.</p>
-            <button style="background-color: #ff9800; color: black; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;"><a href="event_list.html" style="text-decoration: none; color: black;">Explore Events</a></button>
-            <h2>We believe there is an event for Everyone.</h2>
-            <p class="line">Don't miss out the next event.</p>
+    <div class="hero-section">
+        <div class="hero-left"></div>
+        <div class="hero-right">
+            <h1 class="hero-title">EVENT <br> NEXT <br> DOOR</h1>
+            <p class="hero-subtitle">Discover a world of excitement and connection with our diverse range of events.</p>
+            <button class="cta-button" onclick="window.location.href='event_list.html'">Explore Events</button>
+            <h2 class="hero-tagline">We believe there is an event for Everyone.</h2>
+            <p class="hero-description">Don't miss out the next event.</p>
         </div>
     </div>
 
     <footer>
-   
         <div class="footer-content">
-        <h3>Event Next Door</h3>
-
-        <p>Email: info@eventnextdoor.com</p>
-
-        <p>Phone: +254 741 938 327</p>
-
-        <p>&copy; 2026 Event Next Door. All rights reserved.</p>
-        <footer/>
+            <h3>Event Next Door</h3>
+            <p>Email: info@eventnextdoor.com</p>
+            <p>Phone: +254 741 938 327</p>
+            <p>&copy; 2026 Event Next Door. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

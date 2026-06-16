@@ -1,219 +1,198 @@
-// API Configuration
-const API_BASE_URL = 'https://event-time-1.onrender.com';
+/**
+ * API Configuration and Request Handler
+ * Handles all communication with the backend server
+ */
 
-// Store token in localStorage
-const setToken = (token) => {
-  localStorage.setItem('authToken', token);
+const API_CONFIG = {
+  BASE_URL: localStorage.getItem('apiUrl') || 'http://localhost:5000/api',
+  TIMEOUT: 10000,
+  HEADERS: {
+    'Content-Type': 'application/json'
+  }
 };
 
-const getToken = () => {
+/**
+ * Get authorization token from localStorage
+ */
+function getAuthToken() {
   return localStorage.getItem('authToken');
-};
+}
 
-const removeToken = () => {
-  localStorage.removeItem('authToken');
-};
+/**
+ * Make API request with proper error handling
+ */
+async function apiRequest(endpoint, options = {}) {
+  const {
+    method = 'GET',
+    body = null,
+    headers = {},
+    requiresAuth = false
+  } = options;
 
-const getAuthHeaders = () => {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
+  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
+  const requestHeaders = { ...API_CONFIG.HEADERS, ...headers };
 
-// AUTH API CALLS
-const registerUser = async (fullName, email, phone, password, passwordConfirm) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ fullName, email, phone, password, passwordConfirm }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      setToken(data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+  // Add auth token if required
+  if (requiresAuth) {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Authentication token not found. Please login.');
     }
-    return data;
-  } catch (error) {
-    return { success: false, message: error.message };
+    requestHeaders['Authorization'] = `Bearer ${token}`;
   }
-};
 
-const loginUser = async (email, password) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      setToken(data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-    }
-    return data;
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
-
-const logoutUser = () => {
-  removeToken();
-  localStorage.removeItem('user');
-  return { success: true, message: 'Logged out successfully' };
-};
-
-const getProfile = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
-
-// EVENT API CALLS
-const getAllEvents = async (category = '', search = '') => {
-  try {
-    let url = `${API_BASE_URL}/events`;
-    const params = new URLSearchParams();
-    if (category) params.append('category', category);
-    if (search) params.append('search', search);
-    if (params.toString()) url += '?' + params.toString();
-
     const response = await fetch(url, {
-      method: 'GET',
-      headers: getAuthHeaders(),
+      method,
+      headers: requestHeaders,
+      body: body ? JSON.stringify(body) : null,
+      timeout: API_CONFIG.TIMEOUT
     });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
 
-const getEventById = async (eventId) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
+    const data = await response.json();
 
-const createEvent = async (eventData) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events`, {
+    if (!response.ok) {
+      throw new Error(data.message || `HTTP Error: ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`API Error [${endpoint}]:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Authentication API Calls
+ */
+const AuthAPI = {
+  register: async (email, password, first_name, last_name, phone_number) => {
+    return apiRequest('/auth/register', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(eventData),
+      body: { email, password, first_name, last_name, phone_number }
     });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
+  },
+
+  login: async (email, password) => {
+    const response = await apiRequest('/auth/login', {
+      method: 'POST',
+      body: { email, password }
+    });
+    
+    // Store token and user info
+    if (response.token) {
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+    }
+    
+    return response;
+  },
+
+  logout: async () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    return apiRequest('/auth/logout', { method: 'POST', requiresAuth: true });
+  },
+
+  getCurrentUser: async () => {
+    return apiRequest('/auth/me', { requiresAuth: true });
   }
 };
 
-const updateEvent = async (eventId, eventData) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
+/**
+ * Events API Calls
+ */
+const EventsAPI = {
+  getAll: async (category = null, page = 1, limit = 10) => {
+    let endpoint = `/events?page=${page}&limit=${limit}`;
+    if (category && category !== 'all') {
+      endpoint += `&category=${category}`;
+    }
+    return apiRequest(endpoint);
+  },
+
+  getById: async (id) => {
+    return apiRequest(`/events/${id}`);
+  },
+
+  create: async (eventData) => {
+    return apiRequest('/events', {
+      method: 'POST',
+      body: eventData,
+      requiresAuth: true
+    });
+  },
+
+  update: async (id, eventData) => {
+    return apiRequest(`/events/${id}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(eventData),
+      body: eventData,
+      requiresAuth: true
     });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
+  },
 
-const deleteEvent = async (eventId) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
+  delete: async (id) => {
+    return apiRequest(`/events/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      requiresAuth: true
     });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
+  },
+
+  search: async (query) => {
+    return apiRequest(`/events?search=${encodeURIComponent(query)}`);
   }
 };
 
-// BOOKING API CALLS
-const createBooking = async (bookingData) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/bookings`, {
+/**
+ * Bookings API Calls
+ */
+const BookingsAPI = {
+  getUserBookings: async () => {
+    return apiRequest('/bookings', { requiresAuth: true });
+  },
+
+  create: async (event_id, number_of_attendees = 1) => {
+    return apiRequest('/bookings', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(bookingData),
+      body: { event_id, number_of_attendees },
+      requiresAuth: true
     });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
+  },
 
-const getMyBookings = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/bookings/my-bookings`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
-
-const getBookingById = async (bookingId) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-};
-
-const cancelBooking = async (bookingId) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}/cancel`, {
+  cancel: async (bookingId) => {
+    return apiRequest(`/bookings/${bookingId}/cancel`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      requiresAuth: true
     });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
+  },
+
+  getEventAttendees: async (eventId) => {
+    return apiRequest(`/bookings/event/${eventId}/attendees`, {
+      requiresAuth: true
+    });
   }
 };
 
-const getAllBookings = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/bookings`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: error.message };
+/**
+ * Utility Functions
+ */
+const APIUtils = {
+  setApiUrl: (url) => {
+    localStorage.setItem('apiUrl', url);
+    API_CONFIG.BASE_URL = url;
+  },
+
+  isAuthenticated: () => {
+    return !!localStorage.getItem('authToken');
+  },
+
+  getCurrentUserData: () => {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  },
+
+  clearAuth: () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
   }
-};
-
-// AUTH CHECK
-const isAuthenticated = () => {
-  return !!getToken();
-};
-
-const getCurrentUser = () => {
-  const user = localStorage.getItem('user');
-  return user ? JSON.parse(user) : null;
 };

@@ -2,74 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogIn - Event Next Door</title>
-    <link rel="stylesheet" href="css/content.css">
-  
+    <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
-    <nav style="background-color: rgba(17, 6, 6, 0.96); padding: 15px; text-align: center;">
-        <a href="index.html" style="color: rgb(246, 242, 242); text-decoration: none; font-weight: bold;">← Back to Home</a>
+    <nav class="auth-navbar">
+        <a href="index.html" class="back-link">← Back to Home</a>
     </nav>
 
     <div class="auth-container">
-        <h2 id="formTitle" style="text-align: center; color: rgb(246, 242, 242); margin-bottom: 50px;">Log In</h2>
+        <h2 class="auth-title">Log In</h2>
 
-        <form id="log InForm">
+        <form id="loginForm" class="auth-form">
             <div class="form-group">
                 <label for="loginEmail">Email:</label>
-                <input type="email" id="loginEmail" required>
+                <input type="email" id="loginEmail" name="email" required>
+                <span class="error-message" id="emailError"></span>
             </div>
             <div class="form-group">
                 <label for="loginPassword">Password:</label>
-                <input type="password" id="loginPassword" required>
+                <input type="password" id="loginPassword" name="password" required>
+                <span class="error-message" id="passwordError"></span>
             </div>
-            <button type="submit">Login</button>
-        </form>
-
-        <form id="registerForm" style="display: none;">
-            <div class="form-group">
-                <label for="regFullName">Full Name:</label>
-                <input type="text" id="regFullName" required>
-            </div>
-            <div class="form-group">
-                <label for="regEmail">Email:</label>
-                <input type="email" id="regEmail" required>
-            </div>
-            <div class="form-group">
-                <label for="regPhone">Phone Number:</label>
-                <input type="tel" id="regPhone" required>
-            </div>
-            <div class="form-group">
-                <label for="regPassword">Password:</label>
-                <input type="password" id="regPassword" required>
-            </div>
-            <div class="form-group">
-                <label for="regPasswordConfirm">Confirm Password:</label>
-                <input type="password" id="regPasswordConfirm" required>
-            </div>
-            <button type="submit">Register</button>
+            <button type="submit" class="submit-button">Login</button>
+            <span class="error-message" id="formError"></span>
         </form>
 
         <div class="auth-link">
-            <p id="switchText">Don't have an account? <a href="#" onclick="showRegisterForm(register.html)">Register here</a></p>
+            <p>Don't have an account? <a href="register.html">Register here</a></p>
         </div>
     </div>
 
-       <footer>
-   
+    <footer>
         <div class="footer-content">
-        <h3>Event Next Door</h3>
-
-        <p>Email: info@eventnextdoor.com</p>
-
-        <p>Phone: +254 741 938 327</p>
-
-        <p>&copy; 2026 Event Next Door. All rights reserved.</p>
-    </div>
+            <h3>Event Next Door</h3>
+            <p>Email: info@eventnextdoor.com</p>
+            <p>Phone: +254 741 938 327</p>
+            <p>&copy; 2026 Event Next Door. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/login.js"></script>
 </body>
 </html>
