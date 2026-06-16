@@ -1,16 +1,12 @@
-import express from 'express';
-import * as bookingController from '../controllers/bookingController.js';
-import { protect, authorize } from '../middleware/auth.js';
-
+const express = require('express');
 const router = express.Router();
+const bookingController = require('../controllers/bookingController');
+const authMiddleware = require('../middleware/auth');
 
-// Protected routes
-router.post('/', protect, bookingController.createBooking);
-router.get('/my-bookings', protect, bookingController.getMyBookings);
-router.get('/:id', protect, bookingController.getBookingById);
-router.put('/:id/cancel', protect, bookingController.cancelBooking);
+// Protected routes (all booking routes require authentication)
+router.get('/', authMiddleware, bookingController.getUserBookings);
+router.post('/', authMiddleware, bookingController.createBooking);
+router.put('/:id/cancel', authMiddleware, bookingController.cancelBooking);
+router.get('/event/:eventId/attendees', authMiddleware, bookingController.getEventAttendees);
 
-// Admin routes
-router.get('/', protect, authorize('admin'), bookingController.getAllBookings);
-
-export default router;
+module.exports = router;

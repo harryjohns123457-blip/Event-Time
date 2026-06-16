@@ -1,161 +1,231 @@
-import Event from '../models/Event.js';
+const supabase = require('../config/supabase');
 
-export const getAllEvents = async (req, res, next) => {
+// Get all events
+const getAllEvents = async (req, res) => {
   try {
-    const { category, search } = req.query;
-    let filter = { isActive: true };
+    const { category, page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('events')
+      .select('*', { count: 'exact' });
 
     if (category) {
-      filter.category = category;
+      query = query.eq('category', category);
     }
 
-    if (search) {
-      filter.title = { $regex: search, $options: 'i' };
+    const { data: events, count, error } = await query
+      .order('start_date', { ascending: true })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to fetch events',
+        error: error.message
+      });
     }
 
-    const events = await Event.find(filter)
-      .populate('organizer', 'fullName email')
-      .sort({ date: 1 });
-
-    res.status(200).json({
+    res.json({
       success: true,
-      count: events.length,
-      events,
+      data: events,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count
+      }
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error fetching events',
+      error: err.message
     });
   }
 };
 
-export const getEventById = async (req, res, next) => {
+// Get single event
+const getEventById = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id).populate('organizer', 'fullName email');
+    const { id } = req.params;
 
-    if (!event) {
+    const { data: event, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        users(first_name, last_name, email),
+        reviews(id, rating, review_text, users(first_name))
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
       return res.status(404).json({
         success: false,
         message: 'Event not found',
+        error: error.message
       });
     }
 
-    res.status(200).json({
+    res.json({
       success: true,
-      event,
+      data: event
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error fetching event',
+      error: err.message
     });
   }
 };
 
-export const createEvent = async (req, res, next) => {
+// Create new event
+const createEvent = async (req, res) => {
   try {
-    const { title, description, category, date, time, venue, capacity, image, pricing } = req.body;
+    const { title, description, category, start_date, end_date, location, max_attendees, price } = req.body;
 
-    if (!title || !description || !category || !date || !time || !venue || !capacity || !image) {
+    if (!title || !start_date || !end_date) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields',
+        message: 'Title, start_date, and end_date are required'
       });
     }
 
-    const event = await Event.create({
-      title,
-      description,
-      category,
-      date,
-      time,
-      venue,
-      capacity,
-      image,
-      pricing,
-      organizer: req.user._id,
-    });
+    const { data: event, error } = await supabase
+      .from('events')
+      .insert([{
+        title,
+        description,
+        category,
+        start_date,
+        end_date,
+        location,
+        organizer_id: req.user.id,
+        max_attendees,
+        price: price || 0
+      }])
+      .select();
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create event',
+        error: error.message
+      });
+    }
 
     res.status(201).json({
       success: true,
       message: 'Event created successfully',
-      event,
+      data: event[0]
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error creating event',
+      error: err.message
     });
   }
 };
 
-export const updateEvent = async (req, res, next) => {
+// Update event
+const updateEvent = async (req, res) => {
   try {
-    let event = await Event.findById(req.params.id);
+    const { id } = req.params;
+    const updateData = req.body;
 
-    if (!event) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found',
-      });
-    }
+    // Check if user is the organizer
+    const { data: event, error: fetchError } = await supabase
+      .from('events')
+      .select('organizer_id')
+      .eq('id', id)
+      .single();
 
-    // Check if user is event organizer or admin
-    if (event.organizer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (fetchError || event.organizer_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this event',
+        message: 'Not authorized to update this event'
       });
     }
 
-    event = await Event.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const { data: updatedEvent, error } = await supabase
+      .from('events')
+      .update(updateData)
+      .eq('id', id)
+      .select();
 
-    res.status(200).json({
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to update event',
+        error: error.message
+      });
+    }
+
+    res.json({
       success: true,
       message: 'Event updated successfully',
-      event,
+      data: updatedEvent[0]
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error updating event',
+      error: err.message
     });
   }
 };
 
-export const deleteEvent = async (req, res, next) => {
+// Delete event
+const deleteEvent = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
+    const { id } = req.params;
 
-    if (!event) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found',
-      });
-    }
+    // Check if user is the organizer
+    const { data: event, error: fetchError } = await supabase
+      .from('events')
+      .select('organizer_id')
+      .eq('id', id)
+      .single();
 
-    // Check if user is event organizer or admin
-    if (event.organizer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (fetchError || event.organizer_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this event',
+        message: 'Not authorized to delete this event'
       });
     }
 
-    await Event.findByIdAndDelete(req.params.id);
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', id);
 
-    res.status(200).json({
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to delete event',
+        error: error.message
+      });
+    }
+
+    res.json({
       success: true,
-      message: 'Event deleted successfully',
+      message: 'Event deleted successfully'
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error deleting event',
+      error: err.message
     });
   }
+};
+
+module.exports = {
+  getAllEvents,
+  getEventById,
+  createEvent,
+  updateEvent,
+  deleteEvent
 };

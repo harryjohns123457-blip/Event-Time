@@ -1,205 +1,188 @@
-import Booking from '../models/Booking.js';
-import Event from '../models/Event.js';
+const supabase = require('../config/supabase');
 
-export const createBooking = async (req, res, next) => {
+// Get user bookings
+const getUserBookings = async (req, res) => {
   try {
-    const { eventId, ticketType, ticketQuantity, mpesaTransactionId } = req.body;
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        events(title, start_date, end_date, location)
+      `)
+      .eq('user_id', req.user.id)
+      .order('booking_date', { ascending: false });
 
-    // Validation
-    if (!eventId || !ticketType || !ticketQuantity || !mpesaTransactionId) {
+    if (error) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields',
+        message: 'Failed to fetch bookings',
+        error: error.message
       });
     }
 
-    // Get event
-    const event = await Event.findById(eventId);
-    if (!event) {
+    res.json({
+      success: true,
+      data: bookings
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching bookings',
+      error: err.message
+    });
+  }
+};
+
+// Create booking
+const createBooking = async (req, res) => {
+  try {
+    const { event_id, number_of_attendees } = req.body;
+
+    if (!event_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event ID is required'
+      });
+    }
+
+    // Get event details for pricing
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('price, max_attendees')
+      .eq('id', event_id)
+      .single();
+
+    if (eventError) {
       return res.status(404).json({
         success: false,
         message: 'Event not found',
+        error: eventError.message
       });
     }
 
-    // Check available seats
-    if (event.availableSeats < ticketQuantity) {
-      return res.status(400).json({
-        success: false,
-        message: `Only ${event.availableSeats} seats available`,
-      });
-    }
-
-    // Get pricing
-    const ticketTypeKey = ticketType.toLowerCase();
-    const pricing = event.pricing[ticketTypeKey];
-    if (!pricing) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid ticket type',
-      });
-    }
-
-    // Calculate total price (use discount if available)
-    const pricePerTicket = pricing.discountPrice || pricing.price;
-    const totalPrice = pricePerTicket * ticketQuantity;
-
-    // Check for duplicate booking
-    const existingBooking = await Booking.findOne({
-      userId: req.user._id,
-      eventId,
-      ticketType,
-      bookingStatus: { $in: ['pending', 'confirmed'] },
-    });
-
-    if (existingBooking) {
-      return res.status(400).json({
-        success: false,
-        message: 'You already have a booking for this event and ticket type',
-      });
-    }
+    // Calculate total price
+    const total_price = event.price * (number_of_attendees || 1);
 
     // Create booking
-    const booking = await Booking.create({
-      userId: req.user._id,
-      eventId,
-      ticketType,
-      ticketQuantity,
-      totalPrice,
-      mpesaTransactionId,
-    });
+    const { data: booking, error } = await supabase
+      .from('bookings')
+      .insert([{
+        user_id: req.user.id,
+        event_id,
+        number_of_attendees: number_of_attendees || 1,
+        total_price,
+        booking_status: 'confirmed'
+      }])
+      .select();
 
-    // Update available seats
-    event.availableSeats -= ticketQuantity;
-    await event.save();
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create booking',
+        error: error.message
+      });
+    }
 
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
-      booking,
+      data: booking[0]
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error creating booking',
+      error: err.message
     });
   }
 };
 
-export const getMyBookings = async (req, res, next) => {
+// Cancel booking
+const cancelBooking = async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.user._id })
-      .populate('eventId')
-      .sort({ bookingDate: -1 });
+    const { id } = req.params;
 
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      bookings,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+    // Verify user owns this booking
+    const { data: booking, error: fetchError } = await supabase
+      .from('bookings')
+      .select('user_id')
+      .eq('id', id)
+      .single();
 
-export const getBookingById = async (req, res, next) => {
-  try {
-    const booking = await Booking.findById(req.params.id);
-
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found',
-      });
-    }
-
-    // Check ownership
-    if (booking.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (fetchError || booking.user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to view this booking',
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      booking,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-export const cancelBooking = async (req, res, next) => {
-  try {
-    let booking = await Booking.findById(req.params.id);
-
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found',
-      });
-    }
-
-    // Check ownership
-    if (booking.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to cancel this booking',
-      });
-    }
-
-    if (booking.bookingStatus === 'cancelled') {
-      return res.status(400).json({
-        success: false,
-        message: 'Booking is already cancelled',
+        message: 'Not authorized to cancel this booking'
       });
     }
 
     // Update booking status
-    booking.bookingStatus = 'cancelled';
-    await booking.save();
+    const { data: updatedBooking, error } = await supabase
+      .from('bookings')
+      .update({ booking_status: 'cancelled' })
+      .eq('id', id)
+      .select();
 
-    // Restore available seats
-    const event = await Event.findById(booking.eventId);
-    event.availableSeats += booking.ticketQuantity;
-    await event.save();
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to cancel booking',
+        error: error.message
+      });
+    }
 
-    res.status(200).json({
+    res.json({
       success: true,
       message: 'Booking cancelled successfully',
-      booking,
+      data: updatedBooking[0]
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error cancelling booking',
+      error: err.message
     });
   }
 };
 
-export const getAllBookings = async (req, res, next) => {
+// Get event attendees
+const getEventAttendees = async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate('userId', 'fullName email phone')
-      .populate('eventId', 'title date')
-      .sort({ bookingDate: -1 });
+    const { eventId } = req.params;
 
-    res.status(200).json({
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        users(first_name, last_name, email)
+      `)
+      .eq('event_id', eventId)
+      .eq('booking_status', 'confirmed');
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to fetch attendees',
+        error: error.message
+      });
+    }
+
+    res.json({
       success: true,
-      count: bookings.length,
-      bookings,
+      data: bookings
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Error fetching attendees',
+      error: err.message
     });
   }
+};
+
+module.exports = {
+  getUserBookings,
+  createBooking,
+  cancelBooking,
+  getEventAttendees
 };

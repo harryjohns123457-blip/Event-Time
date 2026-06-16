@@ -1,40 +1,28 @@
+// Error handling middleware
 const errorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.message = err.message || 'Internal Server Error';
+  console.error('Error:', err.message);
 
-  // Handle MongoDB Duplicate Key Error
-  if (err.code === 11000) {
-    const message = `Duplicate Field Value Entered`;
-    err = new Error(message);
-    err.statusCode = 400;
-  }
-
-  // Handle JWT Expired Error
-  if (err.name === 'JsonWebTokenError') {
-    const message = `Invalid JWT Token`;
-    err = new Error(message);
-    err.statusCode = 400;
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    const message = `JWT Token Expired`;
-    err = new Error(message);
-    err.statusCode = 400;
-  }
-
-  // Handle Mongoose Validation Error
   if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors)
-      .map((val) => val.message)
-      .join(', ');
-    err = new Error(message);
-    err.statusCode = 400;
+    return res.status(400).json({
+      success: false,
+      message: 'Validation error',
+      errors: err.errors
+    });
   }
 
-  return res.status(err.statusCode).json({
+  if (err.name === 'AuthenticationError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication failed',
+      error: err.message
+    });
+  }
+
+  return res.status(500).json({
     success: false,
-    message: err.message,
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
 };
 
-export default errorHandler;
+module.exports = errorHandler;

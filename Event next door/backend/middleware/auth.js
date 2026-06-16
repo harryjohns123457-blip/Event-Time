@@ -1,46 +1,36 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+const supabase = require('../config/supabase');
 
-export const protect = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized to access this route',
-    });
-  }
-
+// Authentication middleware
+const authMiddleware = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
+    const token = req.headers.authorization?.split(' ')[1];
 
-    if (!req.user) {
-      return res.status(404).json({
+    if (!token) {
+      return res.status(401).json({
         success: false,
-        message: 'User not found',
+        message: 'No authentication token provided'
       });
     }
 
+    // Verify JWT token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+
+    req.user = user;
     next();
-  } catch (error) {
-    return res.status(401).json({
+  } catch (err) {
+    res.status(500).json({
       success: false,
-      message: 'Not authorized to access this route',
+      message: 'Authentication error',
+      error: err.message
     });
   }
 };
 
-export const authorize = (...roles) => (req, res, next) => {
-  if (!roles.includes(req.user.role)) {
-    return res.status(403).json({
-      success: false,
-      message: `User role '${req.user.role}' is not authorized to access this route`,
-    });
-  }
-  next();
-};
+module.exports = authMiddleware;

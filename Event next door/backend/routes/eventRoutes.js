@@ -1,16 +1,15 @@
-import express from 'express';
-import * as eventController from '../controllers/eventController.js';
-import { protect, authorize } from '../middleware/auth.js';
-
+const express = require('express');
 const router = express.Router();
+const eventController = require('../controllers/eventController');
+const authMiddleware = require('../middleware/auth');
 
 // Public routes
 router.get('/', eventController.getAllEvents);
 router.get('/:id', eventController.getEventById);
 
 // Protected routes
-router.post('/', protect, authorize('admin'), eventController.createEvent);
-router.put('/:id', protect, authorize('admin'), eventController.updateEvent);
-router.delete('/:id', protect, authorize('admin'), eventController.deleteEvent);
+router.post('/', authMiddleware, eventController.createEvent);
+router.put('/:id', authMiddleware, eventController.updateEvent);
+router.delete('/:id', authMiddleware, eventController.deleteEvent);
 
-export default router;
+module.exports = router;
